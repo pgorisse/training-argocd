@@ -25,14 +25,6 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion | default "latest" }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          # Nginx based image need to write in thoses directories
-          volumeMounts:
-          - mountPath: /var/cache/nginx
-            subPath: cache-nginx
-            name: temp-vol
-          - mountPath: /var/run
-            subPath: run
-            name: temp-vol
           ports:
             - name: http
               containerPort: 80
@@ -88,6 +80,3 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       # Load volumes to write temporary files
-      volumes:
-        - name: temp-vol
-          emptyDir: {}
