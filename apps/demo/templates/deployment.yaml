@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "demo.fullname" . }}
+  labels:
+    {{- include "demo.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "demo.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "demo.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+          {{- with .Values.securityContext }}
+            {{- toYaml . | nindent 12 -}}
+          {{- end }}
+            # Force unprivileged containers
+            privileged: false
+            # Force RO on container root filesystem
+            readOnlyRootFilesystem: true
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion | default "latest" }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # Nginx based image need to write in thoses directories
+          volumeMounts:
+          - mountPath: /var/cache/nginx
+            subPath: cache-nginx
+            name: temp-vol
+          - mountPath: /var/run
+            subPath: run
+            name: temp-vol
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.livenessProbe.path | default "/" }}
+              port: http
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.path | default "/" }}
+              port: http
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- if .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- else if or .Values.podAntiAffinityPreset .Values.podAffinityPreset .Values.nodeAffinityPreset }}
+      affinity:
+        {{- with .Values.nodeAffinityPreset }}
+        nodeAffinity:
+          {{- include "common.affinities.nodes" . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.podAntiAffinityPreset }}
+        podAntiAffinity:
+          {{- $podAntiAffinityPreset := . -}}
+          {{- $_ := merge $podAntiAffinityPreset (dict "matchLabels" (include "demo.selectorLabels" $)) -}}
+          {{- include "common.affinities.pods" $podAntiAffinityPreset | nindent 10 }}
+        {{- end }}
+        {{- with .Values.podAffinityPreset }}
+        podAffinity:
+          {{- $podAffinityPreset := . -}}
+          {{- $_ := merge $podAffinityPreset (dict "matchLabels" (include "demo.selectorLabels" $)) -}}
+          {{- include "common.affinities.pods" $podAffinityPreset | nindent 10 }}
+        {{- end }}
+      {{- end }}
+
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      # Load volumes to write temporary files
+      volumes:
+        - name: temp-vol
+          emptyDir: {}

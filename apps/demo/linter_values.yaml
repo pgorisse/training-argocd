@@ -1,0 +1,7 @@
+## values file that helm lint must load to validate the chart
+## @see https://github.com/gruntwork-io/pre-commit#linter_valuesyaml
+
+# Enable ingress for linter
+ingress:
+  enabled: true
+  namespace: "test"
