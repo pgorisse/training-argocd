@@ -1,9 +1,0 @@
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: {{ include "demo.fullname" . }}
-spec:
-  minAvailable: 1
-  selector:
-    matchLabels:
-      {{- include "demo.selectorLabels" . | nindent 6 }}
