@@ -23,10 +23,6 @@ spec:
           {{- with .Values.securityContext }}
             {{- toYaml . | nindent 12 -}}
           {{- end }}
-            # Force unprivileged containers
-            privileged: false
-            # Force RO on container root filesystem
-            readOnlyRootFilesystem: true
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion | default "latest" }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           # Nginx based image need to write in thoses directories
