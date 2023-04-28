@@ -8,6 +8,7 @@ metadata:
 spec:
   description: Example Project
   sourceRepos:
-  - '*'
+    - "*"
   destinations:
-  - name: in-cluster
+    - name: "*"
+      namespace: "*"
