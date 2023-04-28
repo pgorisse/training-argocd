@@ -10,4 +10,4 @@ spec:
   sourceRepos:
   - '*'
   destinations:
-  - '*'
+  - name: in-cluster
